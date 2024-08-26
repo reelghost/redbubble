@@ -3,3 +3,4 @@ undetected-chromedriver
 browser-cookie3
 fake-useragent
 webdriver_manager
+Pillow

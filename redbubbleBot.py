@@ -1,11 +1,16 @@
 '''A script to login and post on redbubble'''
-
+from rembg import remove
 from time import sleep
 import random
 import pickle
+import requests
 import undetected_chromedriver as uc
 import os
+import shutil
 from dotenv import load_dotenv
+import io
+from PIL import Image
+from gradio_client import Client
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
@@ -153,6 +158,72 @@ def terms_media_types():
     driver.find_element(By.ID, "submit-work").click()
 
 
+def create_image(prompt, width: float, length: float):
+    '''
+    Creates an image from a prompt using the Hugging Face FLUX API and returns the absolute path of the saved image.
+    
+    Args:
+        prompt (str): The description of the image to be generated.
+        width (float): The width of the image. Must be divisible by 8
+        length (float): The height of the image.
+        
+    Returns:
+        str: The absolute path of the saved image.
+    '''
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "width": width,
+            "height": length
+        }
+    }
+    API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+    headers = {"Authorization": f"Bearer {os.getenv('HUGGING_TOKEN')}"}
+    response = requests.post(API_URL, headers=headers, json=payload)
+    
+    # Check if the response is successful
+    if response.status_code == 200:
+        image_bytes = response.content
+        
+        # Load image from response bytes
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # Ensure the directory exists
+        os.makedirs("pics", exist_ok=True)
+        
+        # Generate a unique filename using a random seed
+        seed = random.randint(10000, 99999)
+        destination_path = f"pics/{seed}.png"
+        
+        # If the file already exists, create a new one with a random number
+        if os.path.exists(destination_path):
+            destination_path = f"pics/{seed}-{random.randrange(0, 99)}.png"
+        
+        # Save the image to the destination path
+        image.save(destination_path)
+        # Remove background image
+        remove_background(destination_path, destination_path) 
+        
+        
+        print(f"Image saved to {destination_path}")
+        return os.path.abspath(destination_path)
+
+def remove_background(input_image_path, output_image_path):
+    """
+    Removes the background from an image and saves the result.
+
+    :param input_image_path: Path to the input image file.
+    :param output_image_path: Path where the output image will be saved.
+    """
+    # Load the input image
+    input_image = Image.open(input_image_path)
+    
+    # Remove the background
+    output_image = remove(input_image)
+    
+    # Save the result
+    output_image.save(output_image_path)
+
 load_dotenv()
 
 # TODO: for tag generator
@@ -168,9 +239,11 @@ driver = uc.Chrome(service=ChromeService(ChromeDriverManager().install()), optio
 actions = ActionChains(driver)
 
 
-# main
-image_path = "F:\\joseLatest\\redbubble\\pics\\deadbone.png" # use an absolute path
 
+# main
+prompt = "A cartoon monkey holding a poster with the words 'ASHUU' on a white background"
+image_path = create_image(prompt=prompt, width=800, length=800)
+print(image_path)
 # program start
 login_message = redbubble_login(driver, os.getenv('USERNAME'), os.getenv('PASSWORD'))
 if login_message == 'success':
