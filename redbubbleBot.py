@@ -4,6 +4,8 @@ from time import sleep
 import random
 import pickle
 import undetected_chromedriver as uc
+import os
+from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
@@ -151,6 +153,7 @@ def terms_media_types():
     driver.find_element(By.ID, "submit-work").click()
 
 
+load_dotenv()
 
 # TODO: for tag generator
 # https://api.auuptools.com/redbubble/pure-tags?keyword=tortoise%20sticker&limit=10
@@ -166,12 +169,10 @@ actions = ActionChains(driver)
 
 
 # main
-
-
 image_path = "F:\\joseLatest\\redbubble\\pics\\deadbone.png" # use an absolute path
 
 # program start
-login_message = redbubble_login(driver, username, password)
+login_message = redbubble_login(driver, os.getenv('USERNAME'), os.getenv('PASSWORD'))
 if login_message == 'success':
     # Upload an image
     upload_message = image_upload(driver=driver, image_path=image_path)
@@ -181,14 +182,14 @@ if login_message == 'success':
         # input title and keywords
         title = "Adorable Cartoon Tortoise"
         tags = [
-     "tortoise", "sticker", "reptile", "animal", "cute", "wildlife", "nature",
-    "shell", "slow", "trendy", "adorable", "pet", "sea turtle", "green",
-    "illustration", "hydro","cartoon tortoise", "funny tortoise", "cute animal",
-    "whimsical tortoise", "tortoise lover", "reptile art", "kids room decor",
-    "smiling tortoise", "animal illustration", "cartoon art", "quirky animal",
-    "nature lover", "pet lover", "tortoise illustration", "wildlife art",
-    "animal sticker", "hand-drawn", "watercolor tortoise"
-]
+            "tortoise", "sticker", "reptile", "animal", "cute", "wildlife", "nature",
+            "shell", "slow", "trendy", "adorable", "pet", "sea turtle", "green",
+            "illustration", "hydro","cartoon tortoise", "funny tortoise", "cute animal",
+            "whimsical tortoise", "tortoise lover", "reptile art", "kids room decor",
+            "smiling tortoise", "animal illustration", "cartoon art", "quirky animal",
+            "nature lover", "pet lover", "tortoise illustration", "wildlife art",
+            "animal sticker", "hand-drawn", "watercolor tortoise"
+        ]
 
 
 
