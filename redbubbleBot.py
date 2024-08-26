@@ -165,9 +165,8 @@ driver = uc.Chrome(service=ChromeService(ChromeDriverManager().install()), optio
 actions = ActionChains(driver)
 
 
-# usage
-username = "reelghostz@gmail.com"
-password = "Mkunduosana@1998"
+# main
+
 
 image_path = "F:\\joseLatest\\redbubble\\pics\\deadbone.png" # use an absolute path
 
