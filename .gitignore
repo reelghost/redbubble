@@ -2,3 +2,5 @@ pics
 *.pkl
 redbubble
 .env
+node_modules
+screenshots

@@ -2,6 +2,7 @@
 from rembg import remove
 from time import sleep
 import random
+import cfscrape
 import pickle
 import requests
 import undetected_chromedriver as uc
@@ -25,6 +26,7 @@ from fake_useragent import UserAgent
 def redbubble_login(driver, username, password):
     '''Logins to redbubble'''
     driver.get("https://www.redbubble.com/auth/login")
+    driver.save_screenshot('ss1.png')
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'ReduxFormInput2')))
 
     # Load cookies if they exist
@@ -158,55 +160,7 @@ def terms_media_types():
     driver.find_element(By.ID, "submit-work").click()
 
 
-def create_image(prompt, width: float, length: float):
-    '''
-    Creates an image from a prompt using the Hugging Face FLUX API and returns the absolute path of the saved image.
-    
-    Args:
-        prompt (str): The description of the image to be generated.
-        width (float): The width of the image. Must be divisible by 8
-        length (float): The height of the image.
-        
-    Returns:
-        str: The absolute path of the saved image.
-    '''
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "width": width,
-            "height": length
-        }
-    }
-    API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-    headers = {"Authorization": f"Bearer {os.getenv('HUGGING_TOKEN')}"}
-    response = requests.post(API_URL, headers=headers, json=payload)
-    
-    # Check if the response is successful
-    if response.status_code == 200:
-        image_bytes = response.content
-        
-        # Load image from response bytes
-        image = Image.open(io.BytesIO(image_bytes))
-        
-        # Ensure the directory exists
-        os.makedirs("pics", exist_ok=True)
-        
-        # Generate a unique filename using a random seed
-        seed = random.randint(10000, 99999)
-        destination_path = f"pics/{seed}.png"
-        
-        # If the file already exists, create a new one with a random number
-        if os.path.exists(destination_path):
-            destination_path = f"pics/{seed}-{random.randrange(0, 99)}.png"
-        
-        # Save the image to the destination path
-        image.save(destination_path)
-        # Remove background image
-        remove_background(destination_path, destination_path) 
-        
-        
-        print(f"Image saved to {destination_path}")
-        return os.path.abspath(destination_path)
+
 
 def remove_background(input_image_path, output_image_path):
     """
@@ -224,7 +178,21 @@ def remove_background(input_image_path, output_image_path):
     # Save the result
     output_image.save(output_image_path)
 
+def get_tags(keyword):
+    url = f'https://api.auuptools.com/redbubble/pure-tags?keyword={keyword}&limit=20'
+    scraper = cfscrape.create_scraper()
+    try:
+        response = scraper.get(url)
+        response.raise_for_status()
+        tags = response.json()
+        return tags
+    except:
+        tags = []
+        return tags
+
+# Main
 load_dotenv()
+image_path = "F:\\joseLatest\\redbubble\\pics\\eagle1.png" # absolute path
 
 # TODO: for tag generator
 # https://api.auuptools.com/redbubble/pure-tags?keyword=tortoise%20sticker&limit=10
@@ -240,10 +208,7 @@ actions = ActionChains(driver)
 
 
 
-# main
-prompt = "A cartoon monkey holding a poster with the words 'ASHUU' on a white background"
-image_path = create_image(prompt=prompt, width=800, length=800)
-print(image_path)
+
 # program start
 login_message = redbubble_login(driver, os.getenv('USERNAME'), os.getenv('PASSWORD'))
 if login_message == 'success':
@@ -253,20 +218,13 @@ if login_message == 'success':
 
     if upload_message == "success":
         # input title and keywords
-        title = "Adorable Cartoon Tortoise"
-        tags = [
-            "tortoise", "sticker", "reptile", "animal", "cute", "wildlife", "nature",
-            "shell", "slow", "trendy", "adorable", "pet", "sea turtle", "green",
-            "illustration", "hydro","cartoon tortoise", "funny tortoise", "cute animal",
-            "whimsical tortoise", "tortoise lover", "reptile art", "kids room decor",
-            "smiling tortoise", "animal illustration", "cartoon art", "quirky animal",
-            "nature lover", "pet lover", "tortoise illustration", "wildlife art",
-            "animal sticker", "hand-drawn", "watercolor tortoise"
-        ]
+        title = "Bold Majestic Eagle Soaring Over Mountains"
+        tags = get_tags(title)
+        if not tags:
+            print("-> No tags found... using the basic tags list")
+            tags = ["colorful", "trendy", "demure", "aesthetic"]
 
-
-
-        descr = " A detailed and expressive tortoise with a captivating smile. Whether you're a fan of reptiles, wildlife, or simply enjoy adorable art, this tortoise sticker is sure to bring a smile to your face and add a touch of nature-inspired charm to your collection"
+        descr = "an eagle with its wings spread wide, soaring majestically over rugged mountains"
         driver.find_element(By.XPATH, '//div[@class="add-work-details__title"]/input').send_keys(title)
         for tag in tags:
             driver.find_element(By.XPATH, '//div[@class="add-work-details__tags"]/textarea').send_keys(tag + ',')
